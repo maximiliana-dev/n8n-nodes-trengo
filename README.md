@@ -1,46 +1,95 @@
-![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+# n8n Trengo Webhook Trigger
 
-# n8n-nodes-starter
+**Trengo Webhook - Trigger** node for n8n. Listens for incoming Trengo webhook events, verifies their HMAC SHA256 signature, and forwards the parsed payload into your workflow.
 
-This repo contains example nodes to help you get started building your own custom integrations for [n8n](n8n.io). It includes the node linter and other dependencies.
+---
 
-To make your custom node available to the community, you must create it as an npm package, and [submit it to the npm registry](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
+## Features
 
-## Prerequisites
+- Receives `application/x-www-form-urlencoded` POST requests from Trengo
+- Verifies the `Trengo-Signature` header using your signing secret
+- Parses the URL-encoded body into JSON
+- Emits a workflow item only if the signature is valid
 
-You need the following installed on your development machine:
+---
 
-* [git](https://git-scm.com/downloads)
-* Node.js and pnpm. Minimum version Node 18. You can find instructions on how to install both using nvm (Node Version Manager) for Linux, Mac, and WSL [here](https://github.com/nvm-sh/nvm). For Windows users, refer to Microsoft's guide to [Install NodeJS on Windows](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).
-* Install n8n with:
-  ```
-  pnpm install n8n -g
-  ```
-* Recommended: follow n8n's guide to [set up your development environment](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/).
+## Installation
 
-## Using this starter
+```bash
+# Using npm
+npm install n8n-nodes-trengo
 
-These are the basic steps for working with the starter. For detailed guidance on creating and publishing nodes, refer to the [documentation](https://docs.n8n.io/integrations/creating-nodes/).
+# Using pnpm
+pnpm add n8n-nodes-trengo
+```
 
-1. [Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template repository.
-2. Clone your new repo:
+After installation, link the package in n8n:
+
+```bash
+# In your custom-nodes directory
+npm link n8n-nodes-trengo
+```
+
+Restart n8n and your new node will appear under **Trigger → Trengo Webhook - Trengo**.
+
+---
+
+## Configuration
+
+1. **Signing Secret** (string, required)
+   - Your Trengo webhook signing secret (found in your Trengo account settings).
+2. **Webhook Path** (string, default: `webhook/trengo`)
+   - URL path (without leading slash) where n8n will listen, e.g. `webhook/trengo` → `https://your-domain/webhook/trengo`
+
+---
+
+## Usage
+
+1. Create a new workflow in n8n.
+2. Add the **Trengo Webhook - Trigger** trigger node.
+3. Set your **Signing Secret** and **Webhook Path**.
+4. Deploy the workflow.
+5. Configure your Trengo webhook to point at:
+   ```text
+   https://<your-n8n-domain>/<your-webhook-path>
    ```
-   git clone https://github.com/<your organization>/<your-repo-name>.git
-   ```
-3. Run `pnpm i` to install dependencies.
-4. Open the project in your editor.
-5. Browse the examples in `/nodes` and `/credentials`. Modify the examples, or replace them with your own nodes.
-6. Update the `package.json` to match your details.
-7. Run `pnpm lint` to check for errors or `pnpm lintfix` to automatically fix errors when possible.
-8. Test your node locally. Refer to [Run your node locally](https://docs.n8n.io/integrations/creating-nodes/test/run-node-locally/) for guidance.
-9. Replace this README with documentation for your node. Use the [README_TEMPLATE](README_TEMPLATE.md) to get started.
-10. Update the LICENSE file to use your details.
-11. [Publish](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry) your package to npm.
+6. When Trengo sends an event, the node will verify the signature and emit the payload as JSON.
 
-## More information
+### Example Workflow
 
-Refer to our [documentation on creating nodes](https://docs.n8n.io/integrations/creating-nodes/) for detailed information on building your own nodes.
+```text
+[ Trengo Webhook -Trigger ] → [ Your next node ]
+```
+
+### Example cURL Test
+
+```bash
+timestamp=$(date +%s)
+payload="type=OUTBOUND&message=Hello+World"
+signature=$(printf "%s.%s" "$timestamp" "$payload" \
+  | openssl dgst -sha256 -hmac "YOUR_SECRET" -hex \
+  | sed 's/^.* //')
+
+curl -X POST "http://localhost:5678/webhook/trengo" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Trengo-Signature: $timestamp;$signature" \
+  --data-urlencode "$payload"
+```
+
+---
+
+## Troubleshooting
+
+- **Invalid signature**: Ensure you use the exact raw URL-encoded body and correct signing secret.
+- **No data received**: Verify the webhook path matches your n8n node’s **Webhook Path** setting.
+
+---
 
 ## License
 
-[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
+MIT © Maximiliana
+
+---
+
+> **Disclaimer:**
+> This integration is developed and maintained by Maximiliana (BUKIT APP, S.L.) and has no affiliation or endorsement by Trengo. Maximiliana is not responsible for Trengo’s API changes or availability.
