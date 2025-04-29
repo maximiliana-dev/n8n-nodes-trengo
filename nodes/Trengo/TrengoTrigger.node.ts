@@ -10,13 +10,13 @@ import * as crypto from 'crypto';
 
 export class TrengoTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Trengo Webhook - Trigger',
+		displayName: 'Trengo - Trigger',
 		name: 'trengoTrigger',
 		icon: 'file:trengo.svg',
 		group: ['trigger'],
 		version: 1,
 		description: 'Listens for Trengo webhook events',
-		defaults: { name: 'Trengo Webhook' },
+		defaults: { name: 'On Trengo event' },
 		inputs: [],
 		outputs: ['main'],
 		properties: [
@@ -47,12 +47,21 @@ export class TrengoTrigger implements INodeType {
 	};
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
-		console.log('empezando...');
 		const req = this.getRequestObject();
 
 		const raw = (req.rawBody as Buffer).toString('utf8');
 
 		const signatureHeader = this.getHeaderData()['trengo-signature'] as string;
+
+		if (!signatureHeader) {
+			return {
+				webhookResponse: {
+					responseCode: 401,
+					responseBody: 'Please provide a trengo-signature header',
+				},
+			};
+		}
+
 		const [timestamp, signatureHash] = signatureHeader.split(';');
 		const secret = this.getNodeParameter('signingSecret') as string;
 
