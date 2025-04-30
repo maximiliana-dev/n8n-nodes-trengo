@@ -1,9 +1,16 @@
-import { IAuthenticateGeneric, Icon, ICredentialType, INodeProperties } from 'n8n-workflow';
+import {
+	IAuthenticateGeneric,
+	Icon,
+	ICredentialTestRequest,
+	ICredentialType,
+	INodeProperties,
+} from 'n8n-workflow';
+import { TRENGO_API_BASE_URL } from '../../nodes/Trengo/constants';
 
 export class TrengoApi implements ICredentialType {
 	name = 'trengoApi';
 	displayName = 'Trengo API';
-	icon: Icon = 'file:trengo.svg';
+	icon: Icon = 'file:icons/trengo.svg';
 	documentationUrl?: 'https://developers.trengo.com/docs/rate-limiting';
 	properties: INodeProperties[] = [
 		{
@@ -12,7 +19,7 @@ export class TrengoApi implements ICredentialType {
 			type: 'string',
 			typeOptions: { password: true },
 			default: '',
-			description: 'Your Trengo API key (will be sent as Bearer token)',
+			description: 'Your Trengo API key',
 		},
 	];
 	authenticate: IAuthenticateGeneric = {
@@ -21,6 +28,14 @@ export class TrengoApi implements ICredentialType {
 			headers: {
 				Authorization: '=Bearer {{$credentials.apiKey}}',
 			},
+		},
+	};
+
+	test: ICredentialTestRequest = {
+		request: {
+			baseURL: TRENGO_API_BASE_URL,
+			url: '/webhooks',
+			json: true,
 		},
 	};
 }

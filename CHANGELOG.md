@@ -1,5 +1,11 @@
 # @maximiliana/n8n-nodes-trengo
 
+## 1.1.0
+
+### Minor Changes
+
+- API key auto-verification
+
 ## 1.0.0
 
 ### Major Changes

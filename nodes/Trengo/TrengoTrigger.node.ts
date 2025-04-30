@@ -10,12 +10,13 @@ import {
 } from 'n8n-workflow';
 
 import * as crypto from 'crypto';
+import { TRENGO_API_BASE_URL } from './constants';
 
 export class TrengoTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Trengo - Trigger',
 		name: 'trengoTrigger',
-		icon: 'file:trengo.svg',
+		icon: 'file:icons/trengo.svg',
 		group: ['trigger'],
 		version: 1,
 		description: 'Listens for Trengo webhook events',
@@ -122,26 +123,27 @@ export class TrengoTrigger implements INodeType {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
 				const webhookData = this.getWorkflowStaticData('node');
-				if (webhookData.webhookId === undefined) {
-					console.log('estoy en checkExists -> undefined');
+
+				if (!webhookData.webhookId) {
 					return false;
 				}
 
 				try {
 					await this.helpers.httpRequestWithAuthentication.call(this, 'trengoApi', {
 						method: 'GET',
-						url: `https://app.trengo.com/api/v2/webhooks/${webhookData.webhookId}`,
+						url: `${TRENGO_API_BASE_URL}/webhooks/${webhookData.webhookId}`,
 						json: true,
 					});
 				} catch (error) {
-					if (error.httpCode === '404' || error.message.includes('resource_missing')) {
-						delete webhookData.webhookId;
-						delete webhookData.webhookEvents;
-						delete webhookData.webhookSecret;
-
-						return false;
+					if (error.httpCode !== '404') {
+						throw error;
 					}
-					throw error;
+
+					delete webhookData.webhookId;
+					delete webhookData.webhookEvents;
+					delete webhookData.webhookSecret;
+
+					return false;
 				}
 
 				return true;
@@ -149,10 +151,10 @@ export class TrengoTrigger implements INodeType {
 			async create(this: IHookFunctions): Promise<boolean> {
 				const response = await this.helpers.httpRequestWithAuthentication.call(this, 'trengoApi', {
 					method: 'POST',
-					url: `https://app.trengo.com/api/v2/webhooks`,
+					url: `${TRENGO_API_BASE_URL}/webhooks`,
 					json: true,
 					body: {
-						name: 'Created by n8n',
+						name: `On ${this.getNodeParameter('event')} - Created by n8n`,
 						type: this.getNodeParameter('event'),
 						url: this.getNodeWebhookUrl('default'),
 					},
@@ -178,23 +180,23 @@ export class TrengoTrigger implements INodeType {
 			async delete(this: IHookFunctions): Promise<boolean> {
 				const webhookData = this.getWorkflowStaticData('node');
 
-				if (webhookData.webhookId !== undefined) {
-					try {
-						await this.helpers.httpRequestWithAuthentication.call(this, 'trengoApi', {
-							method: 'DELETE',
-							url: `https://app.trengo.com/api/v2/webhooks/${webhookData.webhookId}`,
-							json: true,
-						});
-					} catch (error) {
-						return false;
-					}
-
-					// Remove from the static workflow data so that it is clear
-					// that no webhooks are registered anymore
-					delete webhookData.webhookId;
-					delete webhookData.webhookEvent;
-					delete webhookData.webhookSecret;
+				if (!webhookData.webhookId) {
+					return true;
 				}
+
+				try {
+					await this.helpers.httpRequestWithAuthentication.call(this, 'trengoApi', {
+						method: 'DELETE',
+						url: `${TRENGO_API_BASE_URL}/webhooks/${webhookData.webhookId}`,
+						json: true,
+					});
+				} catch (error) {
+					return false;
+				}
+
+				delete webhookData.webhookId;
+				delete webhookData.webhookEvent;
+				delete webhookData.webhookSecret;
 
 				return true;
 			},
