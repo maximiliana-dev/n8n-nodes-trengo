@@ -1,5 +1,11 @@
 # @maximiliana/n8n-nodes-trengo
 
+## 1.0.0
+
+### Major Changes
+
+- Creates webhooks on Trengo side on its own
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,39 +1,110 @@
-import type {
-	IWebhookFunctions,
-	INodeType,
-	INodeTypeDescription,
-	IWebhookResponseData,
-	IDataObject,
+import {
+	type IWebhookFunctions,
+	type INodeType,
+	type INodeTypeDescription,
+	type IWebhookResponseData,
+	type IDataObject,
+	type IHookFunctions,
+	NodeApiError,
+	JsonObject,
 } from 'n8n-workflow';
 
 import * as crypto from 'crypto';
 
 export class TrengoTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Trengo - Trigger',
+		displayName: 'Trengo',
 		name: 'trengoTrigger',
 		icon: 'file:trengo.svg',
 		group: ['trigger'],
 		version: 1,
 		description: 'Listens for Trengo webhook events',
+		subtitle: '={{ $parameter["event"] }}',
 		defaults: { name: 'On Trengo event' },
 		inputs: [],
 		outputs: ['main'],
+		credentials: [{ name: 'trengoApi', required: true }],
 		properties: [
 			{
-				displayName: 'Signing Secret',
-				name: 'signingSecret',
-				type: 'string',
-				typeOptions: { password: true },
-				default: '',
-				description: 'Webhook secret',
-			},
-			{
-				displayName: 'Webhook Path',
-				name: 'webhookPath',
-				type: 'string',
-				default: 'webhook/trengo',
-				description: 'Webhook path (no initial “/”)',
+				displayName: 'Events',
+				name: 'event',
+				type: 'options',
+				options: [
+					{
+						name: 'Inbound message',
+						value: 'INBOUND',
+						description: 'When an inbound message is received',
+					},
+					{
+						name: 'Outbound message',
+						value: 'OUTBOUND',
+						description: 'When an outbound message is sent',
+					},
+					{
+						name: 'Internal note',
+						value: 'NOTE',
+						description: 'When an internal message is created',
+					},
+					{
+						name: 'Label added',
+						value: 'TICKET_LABEL_ADDED',
+						description: 'When a label is added to a ticket',
+					},
+					{
+						name: 'Label removed',
+						value: 'TICKET_LABEL_DELETED',
+						description: 'When a label is removed from a ticket',
+					},
+					{
+						name: 'Ticket assigned',
+						value: 'TICKET_ASSIGNED',
+						description: 'When a ticket is assigned to an agent',
+					},
+					{ name: 'Ticket closed', value: 'TICKET_CLOSED', description: 'When a ticket is closed' },
+					{
+						name: 'Ticket reopened',
+						value: 'TICKET_REOPENED',
+						description: 'When a ticket is reopened',
+					},
+					{
+						name: 'Marked as spam',
+						value: 'TICKET_MARKED_AS_SPAM',
+						description: 'When a ticket is marked as spam',
+					},
+					{
+						name: 'Unmarked as spam',
+						value: 'TICKET_UNMARKED_AS_SPAM',
+						description: 'When a ticket is unmarked as spam',
+					},
+					{
+						name: 'Voice call started',
+						value: 'VOICE_CALL_STARTED',
+						description: 'When a voice call has started',
+					},
+					{
+						name: 'Voice call ended',
+						value: 'VOICE_CALL_ENDED',
+						description: 'When a voice call has ended',
+					},
+					{
+						name: 'Voice call recorded',
+						value: 'VOICE_CALL_RECORDED',
+						description: 'When a voice call has been recorded',
+					},
+					{
+						name: 'Voice call missed',
+						value: 'VOICE_CALL_MISSED',
+						description: 'When a voice call is missed',
+					},
+					{
+						name: 'IVR action sent',
+						value: 'VOICE_CALL_ROUTE_NUMBER',
+						description: 'When an IVR action is sent',
+					},
+				],
+				default: ['INBOUND'],
+				required: true,
+				description: 'Which Trengo events to subscribe to',
 			},
 		],
 		webhooks: [
@@ -41,9 +112,92 @@ export class TrengoTrigger implements INodeType {
 				name: 'default',
 				httpMethod: 'POST',
 				responseMode: 'onReceived',
-				path: '={{$parameter["webhookPath"]}}',
+				path: 'webhook',
 			},
 		],
+	};
+
+	webhookMethods = {
+		default: {
+			async checkExists(this: IHookFunctions): Promise<boolean> {
+				const webhookData = this.getWorkflowStaticData('node');
+				if (webhookData.webhookId === undefined) {
+					console.log('estoy en checkExists -> undefined');
+					return false;
+				}
+
+				try {
+					await this.helpers.httpRequestWithAuthentication.call(this, 'trengoApi', {
+						method: 'GET',
+						url: `https://app.trengo.com/api/v2/webhooks/${webhookData.webhookId}`,
+						json: true,
+					});
+				} catch (error) {
+					if (error.httpCode === '404' || error.message.includes('resource_missing')) {
+						delete webhookData.webhookId;
+						delete webhookData.webhookEvents;
+						delete webhookData.webhookSecret;
+
+						return false;
+					}
+					throw error;
+				}
+
+				return true;
+			},
+			async create(this: IHookFunctions): Promise<boolean> {
+				const response = await this.helpers.httpRequestWithAuthentication.call(this, 'trengoApi', {
+					method: 'POST',
+					url: `https://app.trengo.com/api/v2/webhooks`,
+					json: true,
+					body: {
+						name: 'Created by n8n',
+						type: this.getNodeParameter('event'),
+						url: this.getNodeWebhookUrl('default'),
+					},
+				});
+
+				if (
+					response.id === undefined ||
+					response.signing_secret === undefined ||
+					response.type === undefined
+				) {
+					throw new NodeApiError(this.getNode(), response as JsonObject, {
+						message: 'Trengo webhook creation response did not contain the expected data.',
+					});
+				}
+
+				const webhookData = this.getWorkflowStaticData('node');
+				webhookData.webhookId = response.id as number;
+				webhookData.webhookEvent = response.type as string;
+				webhookData.webhookSecret = response.signing_secret as string;
+
+				return true;
+			},
+			async delete(this: IHookFunctions): Promise<boolean> {
+				const webhookData = this.getWorkflowStaticData('node');
+
+				if (webhookData.webhookId !== undefined) {
+					try {
+						await this.helpers.httpRequestWithAuthentication.call(this, 'trengoApi', {
+							method: 'DELETE',
+							url: `https://app.trengo.com/api/v2/webhooks/${webhookData.webhookId}`,
+							json: true,
+						});
+					} catch (error) {
+						return false;
+					}
+
+					// Remove from the static workflow data so that it is clear
+					// that no webhooks are registered anymore
+					delete webhookData.webhookId;
+					delete webhookData.webhookEvent;
+					delete webhookData.webhookSecret;
+				}
+
+				return true;
+			},
+		},
 	};
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
@@ -63,7 +217,7 @@ export class TrengoTrigger implements INodeType {
 		}
 
 		const [timestamp, signatureHash] = signatureHeader.split(';');
-		const secret = this.getNodeParameter('signingSecret') as string;
+		const secret = this.getWorkflowStaticData('node').webhookSecret as string;
 
 		const expectedHash = crypto
 			.createHmac('sha256', secret)
