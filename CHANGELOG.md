@@ -1,5 +1,11 @@
 # @maximiliana/n8n-nodes-trengo
 
+## 1.2.0
+
+### Minor Changes
+
+- Process ids as integers
+
 ## 1.1.0
 
 ### Minor Changes

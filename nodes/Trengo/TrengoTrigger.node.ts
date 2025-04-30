@@ -237,8 +237,18 @@ export class TrengoTrigger implements INodeType {
 			};
 		}
 
+		const input = req.body as IDataObject;
+		const body = Object.fromEntries(
+			Object.entries(input).map(([key, value]) => [
+				key,
+				key.endsWith('_id') && typeof value === 'string' && /^\d+$/.test(value)
+					? parseInt(value)
+					: value,
+			]),
+		);
+
 		return {
-			workflowData: [this.helpers.returnJsonArray(req.body as IDataObject)],
+			workflowData: [this.helpers.returnJsonArray(body)],
 		};
 	}
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@maximiliana/n8n-nodes-trengo",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"description": "A n8n node for listening to Trengo webhook events",
 	"keywords": [
 		"n8n-community-node-package",
