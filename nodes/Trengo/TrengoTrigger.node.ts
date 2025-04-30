@@ -14,7 +14,7 @@ import { TRENGO_API_BASE_URL } from './constants';
 
 export class TrengoTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Trengo - Trigger',
+		displayName: 'Trengo Trigger',
 		name: 'trengoTrigger',
 		icon: 'file:icons/trengo.svg',
 		group: ['trigger'],

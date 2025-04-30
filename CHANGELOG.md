@@ -1,5 +1,11 @@
 # @maximiliana/n8n-nodes-trengo
 
+## 1.2.1
+
+### Patch Changes
+
+- Fix node name
+
 ## 1.2.0
 
 ### Minor Changes
