@@ -1,95 +1,56 @@
-# n8n Trengo Webhook Trigger
+# 🚀 n8n-nodes-trengo
 
-**Trengo Webhook - Trigger** node for n8n. Listens for incoming Trengo webhook events, verifies their HMAC SHA256 signature, and forwards the parsed payload into your workflow.
+Unofficial node to integrate [Trengo](https://trengo.com/) webhook events into n8n workflows.
 
----
+## 📖 About
 
-## Features
+This node allows you to receive (Trengo events)[https://developers.trengo.com/docs/configuration] in real-time within your n8n workflows. It automatically verifies HMAC signatures and parses payloads so you can start automating your customer service processes.
 
-- Receives `application/x-www-form-urlencoded` POST requests from Trengo
-- Verifies the `Trengo-Signature` header using your signing secret
-- Parses the URL-encoded body into JSON
-- Emits a workflow item only if the signature is valid
+## ✨ Supported Events
 
----
+Webhooks will be created and deleted automatically using the Trengo REST API.
 
-## Installation
+| Event                   | Description               | Supported |
+| ----------------------- | ------------------------- | --------- |
+| INBOUND                 | Inbound message received  | ✅        |
+| OUTBOUND                | Outbound message sent     | ✅        |
+| NOTE                    | Internal note created     | ✅        |
+| TICKET_LABEL_ADDED      | Label added to ticket     | ✅        |
+| TICKET_LABEL_DELETED    | Label removed from ticket | ✅        |
+| TICKET_ASSIGNED         | Ticket assigned           | ✅        |
+| TICKET_CLOSED           | Ticket closed             | ✅        |
+| TICKET_REOPENED         | Ticket reopened           | ✅        |
+| TICKET_MARKED_AS_SPAM   | Ticket marked as spam     | ✅        |
+| TICKET_UNMARKED_AS_SPAM | Ticket unmarked as spam   | ✅        |
+| VOICE_CALL_STARTED      | Voice call started        | ✅        |
+| VOICE_CALL_ENDED        | Voice call ended          | ✅        |
+| VOICE_CALL_RECORDED     | Voice call recorded       | ✅        |
+| VOICE_CALL_MISSED       | Voice call missed         | ✅        |
+| VOICE_CALL_ROUTE_NUMBER | IVR action sent           | ✅        |
 
-```bash
-# Using npm
-npm install n8n-nodes-trengo
+## 🔧 Installation
 
-# Using pnpm
-pnpm add n8n-nodes-trengo
-```
+1. Open your n8n instance
+2. Go to Settings > Community Nodes
+3. Search for "@maximiliana/n8n-nodes-trengo"
+4. Click Install
+5. Restart n8n
 
-After installation, link the package in n8n:
+## 🗺️ Roadmap
 
-```bash
-# In your custom-nodes directory
-npm link n8n-nodes-trengo
-```
+- [ ] Support for Trengo API actions
+- [ ] Extended documentation
 
-Restart n8n and your new node will appear under **Trigger → Trengo Webhook - Trengo**.
+## 🤝 Contributing
 
----
+Contributions are welcome! If you have any ideas or improvements, feel free to open a PR.
 
-## Configuration
+## ⚖️ Legal Disclaimer
 
-1. **Signing Secret** (string, required)
-   - Your Trengo webhook signing secret (found in your Trengo account settings).
-2. **Webhook Path** (string, default: `webhook/trengo`)
-   - URL path (without leading slash) where n8n will listen, e.g. `webhook/trengo` → `https://your-domain/webhook/trengo`
+This node is developed and maintained by Maximiliana (BUKIT APP, S.L.) and has no affiliation with Trengo. We are not responsible for any Trengo API changes or availability.
 
----
+The Trengo logo and "Trengo" trademark are registered trademarks owned by Trengo B.V.
 
-## Usage
+## 📝 License
 
-1. Create a new workflow in n8n.
-2. Add the **Trengo Webhook - Trigger** trigger node.
-3. Set your **Signing Secret** and **Webhook Path**.
-4. Deploy the workflow.
-5. Configure your Trengo webhook to point at:
-   ```text
-   https://<your-n8n-domain>/<your-webhook-path>
-   ```
-6. When Trengo sends an event, the node will verify the signature and emit the payload as JSON.
-
-### Example Workflow
-
-```text
-[ Trengo Webhook -Trigger ] → [ Your next node ]
-```
-
-### Example cURL Test
-
-```bash
-timestamp=$(date +%s)
-payload="type=OUTBOUND&message=Hello+World"
-signature=$(printf "%s.%s" "$timestamp" "$payload" \
-  | openssl dgst -sha256 -hmac "YOUR_SECRET" -hex \
-  | sed 's/^.* //')
-
-curl -X POST "http://localhost:5678/webhook/trengo" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -H "Trengo-Signature: $timestamp;$signature" \
-  --data-urlencode "$payload"
-```
-
----
-
-## Troubleshooting
-
-- **Invalid signature**: Ensure you use the exact raw URL-encoded body and correct signing secret.
-- **No data received**: Verify the webhook path matches your n8n node’s **Webhook Path** setting.
-
----
-
-## License
-
-MIT © Maximiliana
-
----
-
-> **Disclaimer:**
-> This integration is developed and maintained by Maximiliana (BUKIT APP, S.L.) and has no affiliation or endorsement by Trengo. Maximiliana is not responsible for Trengo’s API changes or availability.
+MIT © Maximiliana (BUKIT APP, S.L.)
