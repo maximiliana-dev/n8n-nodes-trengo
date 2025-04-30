@@ -4,7 +4,7 @@ Unofficial node to integrate [Trengo](https://trengo.com/) webhook events into n
 
 ## 📖 About
 
-This node allows you to receive (Trengo events)[https://developers.trengo.com/docs/configuration] in real-time within your n8n workflows. It automatically verifies HMAC signatures and parses payloads so you can start automating your customer service processes.
+This node allows you to receive [Trengo events](https://developers.trengo.com/docs/configuration) in real-time within your n8n workflows. It automatically verifies HMAC signatures and parses payloads so you can start automating your customer service processes.
 
 ## ✨ Supported Events
 
