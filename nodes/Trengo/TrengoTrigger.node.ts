@@ -13,7 +13,7 @@ import * as crypto from 'crypto';
 
 export class TrengoTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Trengo',
+		displayName: 'Trengo - Trigger',
 		name: 'trengoTrigger',
 		icon: 'file:trengo.svg',
 		group: ['trigger'],
@@ -29,80 +29,81 @@ export class TrengoTrigger implements INodeType {
 				displayName: 'Events',
 				name: 'event',
 				type: 'options',
+				// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 				options: [
 					{
-						name: 'Inbound message',
+						name: 'Inbound Message',
 						value: 'INBOUND',
 						description: 'When an inbound message is received',
 					},
 					{
-						name: 'Outbound message',
+						name: 'Outbound Message',
 						value: 'OUTBOUND',
 						description: 'When an outbound message is sent',
 					},
 					{
-						name: 'Internal note',
+						name: 'Internal Note',
 						value: 'NOTE',
 						description: 'When an internal message is created',
 					},
 					{
-						name: 'Label added',
+						name: 'Label Added',
 						value: 'TICKET_LABEL_ADDED',
 						description: 'When a label is added to a ticket',
 					},
 					{
-						name: 'Label removed',
+						name: 'Label Removed',
 						value: 'TICKET_LABEL_DELETED',
 						description: 'When a label is removed from a ticket',
 					},
 					{
-						name: 'Ticket assigned',
+						name: 'Ticket Assigned',
 						value: 'TICKET_ASSIGNED',
 						description: 'When a ticket is assigned to an agent',
 					},
-					{ name: 'Ticket closed', value: 'TICKET_CLOSED', description: 'When a ticket is closed' },
+					{ name: 'Ticket Closed', value: 'TICKET_CLOSED', description: 'When a ticket is closed' },
 					{
-						name: 'Ticket reopened',
+						name: 'Ticket Reopened',
 						value: 'TICKET_REOPENED',
 						description: 'When a ticket is reopened',
 					},
 					{
-						name: 'Marked as spam',
+						name: 'Marked as Spam',
 						value: 'TICKET_MARKED_AS_SPAM',
 						description: 'When a ticket is marked as spam',
 					},
 					{
-						name: 'Unmarked as spam',
+						name: 'Unmarked as Spam',
 						value: 'TICKET_UNMARKED_AS_SPAM',
 						description: 'When a ticket is unmarked as spam',
 					},
 					{
-						name: 'Voice call started',
+						name: 'Voice Call Started',
 						value: 'VOICE_CALL_STARTED',
 						description: 'When a voice call has started',
 					},
 					{
-						name: 'Voice call ended',
+						name: 'Voice Call Ended',
 						value: 'VOICE_CALL_ENDED',
 						description: 'When a voice call has ended',
 					},
 					{
-						name: 'Voice call recorded',
+						name: 'Voice Call Recorded',
 						value: 'VOICE_CALL_RECORDED',
 						description: 'When a voice call has been recorded',
 					},
 					{
-						name: 'Voice call missed',
+						name: 'Voice Call Missed',
 						value: 'VOICE_CALL_MISSED',
 						description: 'When a voice call is missed',
 					},
 					{
-						name: 'IVR action sent',
+						name: 'IVR Action Sent',
 						value: 'VOICE_CALL_ROUTE_NUMBER',
 						description: 'When an IVR action is sent',
 					},
 				],
-				default: ['INBOUND'],
+				default: 'INBOUND',
 				required: true,
 				description: 'Which Trengo events to subscribe to',
 			},
