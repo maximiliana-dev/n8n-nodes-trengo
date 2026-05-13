@@ -9,8 +9,8 @@ import {
 	JsonObject,
 } from 'n8n-workflow';
 
-import * as crypto from 'crypto';
 import { TRENGO_API_BASE_URL } from './constants';
+import { normalizeWebhookBody, verifyTrengoSignature } from './webhook-verification';
 
 export class TrengoTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -205,47 +205,27 @@ export class TrengoTrigger implements INodeType {
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const req = this.getRequestObject();
-
-		const raw = (req.rawBody as Buffer).toString('utf8');
-
-		const signatureHeader = this.getHeaderData()['trengo-signature'] as string;
-
-		if (!signatureHeader) {
-			return {
-				webhookResponse: {
-					responseCode: 401,
-					responseBody: 'Please provide a trengo-signature header',
-				},
-			};
-		}
-
-		const [timestamp, signatureHash] = signatureHeader.split(';');
+		const rawBody = (req.rawBody as Buffer).toString('utf8');
+		const signatureHeader = this.getHeaderData()['trengo-signature'] as string | undefined;
 		const secret = this.getWorkflowStaticData('node').webhookSecret as string;
 
-		const expectedHash = crypto
-			.createHmac('sha256', secret)
-			.update(`${timestamp}.${raw}`)
-			.digest('hex')
-			.toLowerCase();
+		const verification = verifyTrengoSignature({
+			rawBody,
+			signatureHeader,
+			secret,
+			nowSeconds: Math.floor(Date.now() / 1000),
+		});
 
-		if (expectedHash !== signatureHash) {
+		if (!verification.ok) {
 			return {
 				webhookResponse: {
-					responseCode: 401,
-					responseBody: 'Invalid signature',
+					responseCode: verification.status,
+					responseBody: verification.message,
 				},
 			};
 		}
 
-		const input = req.body as IDataObject;
-		const body = Object.fromEntries(
-			Object.entries(input).map(([key, value]) => [
-				key,
-				key.endsWith('_id') && typeof value === 'string' && /^\d+$/.test(value)
-					? parseInt(value)
-					: value,
-			]),
-		);
+		const body = normalizeWebhookBody(req.body as IDataObject);
 
 		return {
 			workflowData: [this.helpers.returnJsonArray(body)],
