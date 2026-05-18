@@ -217,12 +217,9 @@ export class TrengoTrigger implements INodeType {
 		});
 
 		if (!verification.ok) {
-			return {
-				webhookResponse: {
-					responseCode: verification.status,
-					responseBody: verification.message,
-				},
-			};
+			const res = this.getResponseObject();
+			res.status(verification.status).send(verification.message);
+			return { noWebhookResponse: true };
 		}
 
 		const body = normalizeWebhookBody(req.body as IDataObject);
