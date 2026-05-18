@@ -31,10 +31,9 @@ jobs:
       - name: Build project
         run: pnpm build
 
-      # Use npm (>=11.5.1) for the publish step because pnpm 9.x does not
-      # implement the OIDC trusted-publishing token exchange with npmjs.org.
-      - name: Upgrade npm to a version with OIDC trusted publishing support
-        run: npm install -g npm@latest
-
+      # Use a recent npm (>=11.5.1) for the publish step via npx, because
+      # the bundled npm in Node 22 (10.x) does not implement the OIDC
+      # trusted-publishing token exchange. Avoid `npm install -g npm@latest`
+      # because the in-place self-upgrade is fragile.
       - name: Publish to npm via OIDC
-        run: npm publish --access public --provenance
+        run: npx -y npm@latest publish --access public --provenance
