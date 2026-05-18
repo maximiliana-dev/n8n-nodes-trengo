@@ -31,5 +31,10 @@ jobs:
       - name: Build project
         run: pnpm build
 
-      - name: Publish to npm
-        run: pnpm publish --access public --provenance --no-git-checks
+      # Use npm (>=11.5.1) for the publish step because pnpm 9.x does not
+      # implement the OIDC trusted-publishing token exchange with npmjs.org.
+      - name: Upgrade npm to a version with OIDC trusted publishing support
+        run: npm install -g npm@latest
+
+      - name: Publish to npm via OIDC
+        run: npm publish --access public --provenance
