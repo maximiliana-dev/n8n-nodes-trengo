@@ -1,0 +1,27 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n-trengo-dev
+    ports:
+      - "2086:5678"
+    environment:
+      - N8N_HOST=n8n.tunel.granvia.maximiliana.es
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.tunel.granvia.maximiliana.es/
+      - N8N_EDITOR_BASE_URL=https://n8n.tunel.granvia.maximiliana.es/
+      - N8N_PROXY_HOPS=1
+      - N8N_LOG_LEVEL=info
+      - N8N_SECURE_COOKIE=false
+      - N8N_ENCRYPTION_KEY=dev-fixed-encryption-key-do-not-use-in-prod
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+      - N8N_HIRING_BANNER_ENABLED=false
+      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
+      - GENERIC_TIMEZONE=Europe/Madrid
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./custom:/home/node/.n8n/custom
+
+volumes:
+  n8n_data:
